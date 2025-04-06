@@ -173,8 +173,14 @@ public class ControleEpisodio {
         
         int id = arqEpisodios.create(episodio);
         
+        // Importante: atualiza o ID no objeto episódio após a criação
+        episodio.setId(id);
+        
         // Atualiza o índice na árvore B+
         relacionamento.atualizarIndicesAposOperacao(episodio, "create");
+        
+        // Adiciona explicitamente o relacionamento entre série e episódio
+        relacionamento.adicionarRelacionamento(idSerie, id);
         
         System.out.println("Episódio criado com sucesso! ID: " + id);
     }

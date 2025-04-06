@@ -98,9 +98,9 @@ public class Arquivo<T extends Registro>
     } // end read ( )
 
     /**
-     *  Atualiza um registro no arquivo
-     *  @param id id do registro a ser atualizado
-     *  @return true se o registro foi atualizado, false caso contrário
+     *  Deleta um registro no arquivo
+     *  @param id id do registro a ser deletado
+     *  @return true se o registro foi deletado, false caso contrário
      *  @throws Exception 
      */
     public boolean delete ( int id ) throws Exception {
@@ -110,6 +110,26 @@ public class Arquivo<T extends Registro>
         byte[] b;
         byte lapide;
         Long endereco;
+        
+        // Primeiro tenta encontrar o registro pelo índice direto
+        ParIDEndereco pie = indiceDireto.read(id);
+        if (pie != null) {
+            arquivo.seek(pie.getEndereco());
+            lapide = arquivo.readByte();
+            
+            if (lapide == ' ') {
+                // Marca o registro como excluído
+                arquivo.seek(pie.getEndereco());
+                arquivo.write('*');
+                
+                // Remove do índice direto
+                indiceDireto.delete(id);
+                
+                return true;
+            }
+        }
+        
+        // Busca sequencial como fallback
         arquivo.seek(TAM_CABECALHO);
         while ( arquivo.getFilePointer() < arquivo.length() ) {
             obj = construtor.newInstance();
@@ -124,6 +144,10 @@ public class Arquivo<T extends Registro>
                 if (obj.getId() == id) {
                     arquivo.seek(endereco);
                     arquivo.write('*');
+                    
+                    // Remove do índice direto para garantir
+                    indiceDireto.delete(id);
+                    
                     result = true;
                 } // end if
             } // end if 
