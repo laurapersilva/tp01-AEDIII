@@ -21,13 +21,13 @@ public class Serie implements Registro {
         this.codigo = codigo;
         this.titulo = titulo;
         this.ano = ano;
-        this.tamanhoSinopse = tam;
         this.sinopse = desc;
+        this.tamanhoSinopse = (desc != null) ? desc.length() : 0; // Calcula automaticamente
         this.plataforma = plat;
     }
 
     public Serie(String titulo, long ano, int tam, String sinopse, String plat) {
-        this(0, titulo, ano, tam, sinopse, plat);
+        this(0, titulo, ano, 0, sinopse, plat); // O tamanho será calculado no construtor principal
     }
 
     public Serie() {
@@ -73,6 +73,7 @@ public class Serie implements Registro {
 
     public void setsinopse(String sinopse) {
         this.sinopse = sinopse;
+        this.tamanhoSinopse = (sinopse != null) ? sinopse.length() : 0;
     }
 
     public String getPlataforma() {
@@ -107,6 +108,9 @@ public class Serie implements Registro {
         ano = dataIn.readLong();
         sinopse = dataIn.readUTF();
         plataforma = dataIn.readUTF();
+        
+        // Recalcular o tamanho da sinopse
+        tamanhoSinopse = (sinopse != null) ? sinopse.length() : 0;
     }
 
     @Override
