@@ -1,32 +1,67 @@
-PUCFlix 1.0 - Sistema de Gerenciamento de Séries e Episódios
-Descrição do Projeto
-O PUCFlix é um sistema completo de gerenciamento de séries de streaming e seus episódios, desenvolvido seguindo o padrão MVC e utilizando estruturas de dados avançadas para garantir eficiência nas operações.
+# PUCFlix 1.0 - Sistema de Gerenciamento de Séries
 
-Funcionalidades Principais
-Gestão de Séries
-✅ Cadastro de séries com nome, ano de lançamento, sinopse e plataforma
+O PUCFlix é um sistema completo para gerenciamento de séries e episódios, desenvolvido em Java seguindo o padrão MVC e utilizando estruturas de dados avançadas
 
-✅ Consulta e atualização de informações
+Imagine que você quer catalogar todas as séries da Netflix. Nosso sistema:
 
-✅ Remoção segura (com verificação de episódios vinculados)
+1️⃣ Cadastra Stranger Things (ano, sinopse, etc.)
 
-Gestão de Episódios
-✅ Cadastro de episódios vinculados a séries
+2️⃣ Adiciona episódios (Temp 1 Ep 1: "The Vanishing of Will Byers")
 
-✅ Informações completas: título, temporada, data de exibição e duração
+3️⃣ Busca rapidamente (ex: "Mostrar todos episódios da Temp 2")
 
-✅ Visualização organizada por temporada
+4️⃣ Não deixa excluir se houver episódios vinculados.
 
-Tecnologias e Estruturas
-🏗️ Arquitetura MVC (Model-View-Controller)
+<hr></hr>
 
-🌳 Árvore B+ para relacionamento série-episódio
+✨ **Funcionalidades**
 
-#️⃣ Tabela Hash Extensível para acesso rápido
+Para Séries:
 
-💾 Armazenamento persistente em arquivos
+* Cadastro completo com nome, ano, sinopse e plataforma
 
-Equipe de Desenvolvimento
+* Operações CRUD (Criar, Ler, Atualizar, Deletar)
+
+* Validação de integridade referencial
+
+Para Episódios:
+  
+* Vinculação automática com séries
+
+* Organização por temporadas
+
+* Gerenciamento completo de episódios
+
+<hr></hr>
+
+📂 **Estrutura do Projeto**
+
+**Camada Model**
+
+* Serie.java - Entidade principal com serialização
+* Episodio.java	- Entidade com relacionamento a séries
+  
+**Camada Controller**
+
+* ControleSerie.java - Lógica de negócios para séries
+* ControleEpisodio.java - Gestão de episódios
+* RelacionamentoSerieEpisodio.java - Gerencia Árvore B+ de relacionamentos
+
+**Camada View**
+
+* VisaoSerie.java - Interface de usuário para séries
+* VisaoEpisodio.java - Interface para episódios
+
+**Infraestrutura**
+
+* ArvoreBMais.java - Árvore B+ para índices
+* HashExtensivel.java - Tabela hash para acesso rápido
+* Arquivo.java - Manipulação de arquivos
+
+<hr></hr>
+
+**👨‍💻 Equipe de Desenvolvimento**
+
 Arthur Signorini
 
 Bernardo Vieira
@@ -34,26 +69,3 @@ Bernardo Vieira
 Laura Persilva
 
 Otávio Augusto
-
-Estrutura do Projeto
-Copy
-src/
-├── controller/
-│   ├── ControleEpisodio.java
-│   ├── ControleSerie.java
-│   └── RelacionamentoSerieEpisodio.java
-├── model/
-│   ├── Episodio.java
-│   └── Serie.java
-├── view/
-│   ├── VisaoEpisodio.java
-│   └── VisaoSerie.java
-├── service/
-│   ├── ArvoreBMais.java
-│   ├── HashExtensivel.java
-│   ├── Arquivo.java
-│   └── ParIDSerieEpisodio.java
-└── interfaces/
-    ├── Registro.java
-    ├── RegistroArvoreBMais.java
-    └── RegistroHashExtensivel.java
