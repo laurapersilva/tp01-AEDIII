@@ -1,6 +1,20 @@
 # PUCFlix 1.0 - Sistema de Gerenciamento de Séries
 
-O PUCFlix é um sistema completo para gerenciamento de séries e episódios, desenvolvido em Java seguindo o padrão MVC e utilizando estruturas de dados avançadas
+**🤖 Descrição do Trabalho**
+
+O trabalho implementa um sistema de gerenciamento de catálogo de streaming chamado "PUCFlix", que permite organizar séries e seus respectivos episódios. O sistema possibilita o gerenciamento completo de entidades (séries e episódios) com as operações CRUD (Create, Read, Update, Delete) utilizando arquivos para persistência de dados e estruturas de indexação avançadas.
+
+O PUCFlix armazena as séries e episódios em arquivos binários, utilizando uma tabela hash extensível para acesso direto (pelo ID) e uma árvore B+ para gerenciar os relacionamentos entre séries e episódios. A implementação segue o padrão MVC (Model-View-Controller), com clara separação entre as camadas de modelo de dados, visualização e controle.
+
+O sistema permite:
+- Cadastrar, buscar, alterar e excluir séries
+- Cadastrar, buscar, alterar e excluir episódios vinculados a séries
+- Visualizar estatísticas sobre as séries e temporadas
+- Listar episódios por temporada
+- Visualizar a estrutura da árvore B+ de relacionamentos
+
+O trabalho implementa diversos mecanismos de segurança e recuperação, como verificações de integridade referencial (impedir a exclusão de séries com episódios), validação de entradas, e mecanismos de recuperação para problemas com a árvore B+.
+
 
 Imagine que você quer catalogar todas as séries da Netflix. Nosso sistema:
 
