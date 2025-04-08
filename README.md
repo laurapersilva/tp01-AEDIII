@@ -2,7 +2,7 @@
 
 ## 📽️ O que o trabalho faz?
 
-O PUCFlix é um sistema de gerenciamento de catálogo de séries de streaming, permitindo o cadastro e organização de séries e seus respectivos episódios. O sistema foi desenvolvido seguindo o padrão de arquitetura MVC (Model-View-Controller) e utiliza estruturas de dados avançadas para indexação e busca eficiente das informações.
+O PUCFlix é um sistema de gerenciamento de catálogo de séries de streaming, permitindo o cadastro e organização de séries e seus respectivos episódios. O sistema foi desenvolvido seguindo o padrão de arquitetura MVC (Model-View-Controller) e utiliza estruturas de dados para indexação e busca eficiente das informações.
 
 **Principais funcionalidades:**
 
@@ -100,7 +100,7 @@ O sistema garante a integridade referencial, impedindo a exclusão de séries qu
 
 ## 💻 Experiência de Desenvolvimento
 
-O desenvolvimento do PUCFlix foi um desafio interessante que nos permitiu aplicar conceitos de estruturas de dados avançadas em um contexto prático. A seguir, relatamos nossa experiência:
+O desenvolvimento do PUCFlix foi um desafio interessante que nos permitiu aplicar conceitos de estruturas de dados em um contexto prático.
 
 ### ✅ Requisitos Implementados
 Conseguimos implementar todos os requisitos solicitados, incluindo:
@@ -112,17 +112,15 @@ Conseguimos implementar todos os requisitos solicitados, incluindo:
 
 ### 🚧 Desafios Enfrentados
 
-O maior desafio foi a implementação e o uso correto da Árvore B+ para gerenciar o relacionamento entre séries e episódios. Enfrentamos alguns problemas de inconsistência na árvore, principalmente na inserção de novos relacionamentos. Para resolver esse problema, tentamos implementar mecanismos de recuperação e verificação que garantem a consistência dos dados mesmo em caso de falha da árvore.
+O maior desafio foi a implementação e o uso correto da Árvore B+ para gerenciar o relacionamento entre séries e episódios. Enfrentamos alguns problemas de inconsistência na árvore, principalmente na aquisição dos registros que foram, ao menos, inseridos com sucesso. Para resolver esse problema, tentamos implementar mecanismos de recuperação e verificação que garantem a consistência dos dados mesmo em caso de falha da árvore. Pórem ele, é instável, tendo comportamentos variados, as vezes retona corretamente ou não, mesmo tentando debugar a classe ArvoreBMais não conseguimos chegar a uma conclusão em definitivo.
 
 A implementação do método `compareTo()` na classe `ParIDSerieEpisodio` também exigiu atenção especial, pois precisávamos garantir que a busca na árvore B+ funcionasse corretamente, especialmente para encontrar todos os episódios de uma série específica.
 
 ### 🏆 Resultados Alcançados
 
-Conseguimos desenvolver um sistema funcional que atende a todos os requisitos especificados. O PUCFlix permite gerenciar séries e seus episódios de forma eficiente, com uma interface de linha de comando intuitiva e bem organizada.
+Conseguimos desenvolver um sistema funcional que atende quase todos os requisitos especificados. O PUCFlix permite gerenciar séries e seus episódios de forma eficiente, com uma interface de linha de comando intuitiva e bem organizada.
 
 A estrutura MVC adotada facilitou a manutenção e evolução do código, permitindo que cada componente do sistema tenha responsabilidades bem definidas.
-
-Os mecanismos de recuperação implementados garantem a robustez do sistema, mesmo em casos de falha na estrutura de dados da árvore B+.
 
 ## ✓ Checklist de Requisitos
 
@@ -140,8 +138,6 @@ Os mecanismos de recuperação implementados garantem a robustez do sistema, mes
 
 ## 📝 Conclusão
 
-O desenvolvimento do PUCFlix foi uma experiência enriquecedora que nos permitiu aplicar conceitos teóricos de estruturas de dados em um contexto prático. Apesar dos desafios encontrados, principalmente relacionados à implementação da Árvore B+, conseguimos desenvolver um sistema funcional que atende a todos os requisitos especificados.
+O desenvolvimento do PUCFlix foi uma experiência enriquecedora que nos permitiu aplicar conceitos teóricos de estruturas de dados em um contexto prático. Apesar dos desafios encontrados, principalmente relacionados à implementação da Árvore B+.
 
 A organização do código em camadas (MVC) facilitou o desenvolvimento colaborativo e a manutenção do sistema. Além disso, a implementação de mecanismos de recuperação garantiu a robustez do sistema, mesmo em casos de falha na estrutura de dados.
-
-Como melhorias futuras, poderíamos implementar uma interface gráfica para o sistema, além de adicionar novas funcionalidades como o cadastro de atores e a vinculação destes aos episódios.
