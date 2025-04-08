@@ -28,8 +28,7 @@ public class ControleSerie {
             System.out.println("2) Buscar série");
             System.out.println("3) Alterar série");
             System.out.println("4) Excluir série");
-            System.out.println("5) Ver resumo das temporadas");
-            System.out.println("6) Ver episódios por temporada");
+            System.out.println("5) Visualizar série com episódios por temporada");
             System.out.println("0) Retornar ao menu anterior");
             System.out.print("Escolha uma opção: ");
 
@@ -41,8 +40,7 @@ public class ControleSerie {
                 case 2 -> buscarSeriePorNome();
                 case 3 -> alterarSeriePorNome();
                 case 4 -> excluirSeriePorNome();
-                case 5 -> verResumoTemporadasPorNome();
-                case 6 -> verEpisodiosPorTemporadaPorNome();
+                case 5 -> visualizarSerieComEpisodios();
                 default -> {
                     if (op != 0) {
                         System.out.println("Opção inválida!");
@@ -53,7 +51,7 @@ public class ControleSerie {
     }
 
     private void incluirSerie() throws Exception {
-        Serie serie = visaoSerie.leSerie();
+        Serie serie = visaoSerie.leSerie(false);
         if (serie == null) {
             System.out.println("Operação cancelada.");
             return;
@@ -66,15 +64,6 @@ public class ControleSerie {
         int id = visaoSerie.leIdSerie();
         Serie serie = arqSerie.read(id);
         visaoSerie.mostraSerie(serie);
-        
-        // Se encontrou a série, perguntar se quer ver detalhes
-        if (serie != null) {
-            System.out.print("\nDeseja ver o resumo das temporadas? (S/N): ");
-            String resposta = sc.nextLine().toUpperCase();
-            if (resposta.equals("S")) {
-                verResumoTemporadas(id);
-            }
-        }
     }
     
     private void buscarSeriePorNome() throws Exception {
@@ -102,12 +91,6 @@ public class ControleSerie {
                 if (idSelecionado > 0) {
                     Serie serieSelecionada = arqSerie.read(idSelecionado);
                     visaoSerie.mostraSerie(serieSelecionada);
-                    
-                    System.out.print("\nDeseja ver o resumo das temporadas? (S/N): ");
-                    resposta = sc.nextLine().toUpperCase();
-                    if (resposta.equals("S")) {
-                        verResumoTemporadas(idSelecionado);
-                    }
                 }
             }
         }
@@ -161,7 +144,7 @@ public class ControleSerie {
         visaoSerie.mostraSerie(serieAtual);
         
         // Obter novos dados
-        Serie serieNova = visaoSerie.leSerie();
+        Serie serieNova = visaoSerie.leSerie(true);
         if (serieNova == null) {
             System.out.println("Operação cancelada.");
             return;
@@ -184,7 +167,7 @@ public class ControleSerie {
         System.out.println("\nDados atuais da série:");
         visaoSerie.mostraSerie(serieAtual);
         
-        Serie serieNova = visaoSerie.leSerie();
+        Serie serieNova = visaoSerie.leSerie(true);
         if (serieNova == null) {
             System.out.println("Operação cancelada.");
             return;
@@ -274,8 +257,8 @@ public class ControleSerie {
         boolean resultado = arqSerie.delete(id);
         System.out.println(resultado ? "Série excluída com sucesso!" : "Erro ao excluir série.");
     }
-
-    private void verResumoTemporadasPorNome() throws Exception {
+    
+    private void visualizarSerieComEpisodios() throws Exception {
         String termoBusca = visaoSerie.leTermoBusca();
         
         if (termoBusca.trim().isEmpty()) {
@@ -293,8 +276,8 @@ public class ControleSerie {
             return;
         }
         
-        // Selecionar série para ver resumo
-        System.out.print("\nDigite o ID da série para ver o resumo das temporadas (0 para cancelar): ");
+        // Selecionar série para visualizar
+        System.out.print("\nDigite o ID da série que deseja visualizar (0 para cancelar): ");
         int idSelecionado = sc.nextInt();
         sc.nextLine(); // Limpar buffer
         
@@ -317,102 +300,22 @@ public class ControleSerie {
             return;
         }
         
-        // Mostrar resumo das temporadas
-        verResumoTemporadas(idSelecionado);
-    }
-    
-    // Mantido para uso interno
-    private void verResumoTemporadas(int idSerie) throws Exception {
-        Serie serie = arqSerie.read(idSerie);
+        // Obter série atual
+        Serie serie = arqSerie.read(idSelecionado);
         
-        if (serie == null) {
-            System.out.println("Série não encontrada.");
+        // Verificar se a série possui episódios
+        if (!relacionamento.serieTemEpisodios(idSelecionado)) {
+            System.out.println("\nA série \"" + serie.getTitulo() + "\" não possui episódios cadastrados.");
             return;
         }
         
-        // Obter estatísticas
-        HashMap<Integer, Integer> episodiosPorTemporada = relacionamento.contarEpisodiosPorTemporada(idSerie);
-        int totalEpisodios = relacionamento.getTotalEpisodios(idSerie);
-        int totalTemporadas = relacionamento.getTotalTemporadas(idSerie);
+        // Obter episódios organizados por temporada
+        HashMap<Integer, ArrayList<Episodio>> episodiosPorTemporada = 
+            relacionamento.organizarEpisodiosPorTemporada(idSelecionado);
         
-        // Mostrar resumo - esta é a função que mostra quantos episódios existem por temporada
-        visaoSerie.mostraResumoTemporadas(serie, episodiosPorTemporada, totalEpisodios, totalTemporadas);
+        // Mostrar episódios organizados por temporada
+        visaoSerie.mostraTodosEpisodiosPorTemporada(serie, episodiosPorTemporada);
     }
 
-    private void verEpisodiosPorTemporadaPorNome() throws Exception {
-        String termoBusca = visaoSerie.leTermoBusca();
-        
-        if (termoBusca.trim().isEmpty()) {
-            System.out.println("Termo de busca inválido!");
-            return;
-        }
-        
-        // Realizar a busca
-        ArrayList<Serie> resultados = relacionamento.buscarSeriePorNome(termoBusca);
-        
-        // Exibir resultados
-        visaoSerie.mostraResultadoBuscaSeries(resultados);
-        
-        if (resultados.isEmpty()) {
-            return;
-        }
-        
-        // Selecionar série para ver episódios
-        System.out.print("\nDigite o ID da série para ver os episódios (0 para cancelar): ");
-        int idSelecionado = sc.nextInt();
-        sc.nextLine(); // Limpar buffer
-        
-        if (idSelecionado <= 0) {
-            System.out.println("Operação cancelada.");
-            return;
-        }
-        
-        // Verificar se o ID está na lista
-        boolean encontrado = false;
-        for (Serie s : resultados) {
-            if (s.getId() == idSelecionado) {
-                encontrado = true;
-                break;
-            }
-        }
-        
-        if (!encontrado) {
-            System.out.println("ID não encontrado na lista!");
-            return;
-        }
-        
-        // Mostrar episódios por temporada
-        verEpisodiosPorTemporada(idSelecionado);
-    }
-    
-    // Mantido para uso interno
-    private void verEpisodiosPorTemporada(int idSerie) throws Exception {
-        Serie serie = arqSerie.read(idSerie);
 
-        if (serie == null) {
-            System.out.println("Série não encontrada.");
-            return;
-        }
-        
-        // Primeiro, mostrar um resumo das temporadas disponíveis
-        verResumoTemporadas(idSerie);
-        
-        // Depois, pedir a temporada específica
-        int temporada = visaoSerie.leTemporada();
-        ArrayList<Episodio> episodios = relacionamento.getEpisodiosPorTemporada(idSerie, temporada);
-        visaoSerie.mostraEpisodiosPorTemporada(episodios, temporada);
-        
-        // Perguntar se deseja ver outra temporada
-        System.out.print("\nDeseja ver outra temporada? (S/N): ");
-        String resposta = sc.nextLine().toUpperCase();
-        
-        while (resposta.equals("S")) {
-            temporada = visaoSerie.leTemporada();
-            episodios = relacionamento.getEpisodiosPorTemporada(idSerie, temporada);
-            visaoSerie.mostraEpisodiosPorTemporada(episodios, temporada);
-            
-            System.out.print("\nDeseja ver outra temporada? (S/N): ");
-            resposta = sc.nextLine().toUpperCase();
-        }
-    }
 }

@@ -1,5 +1,0 @@
-Diagnóstico após inserir (1,1)
-Árvore vazia? false
-Encontrados 1 resultados ao buscar o par
-Timestamp: Sun Apr 06 20:00:01 BRT 2025
---------------------------------------------

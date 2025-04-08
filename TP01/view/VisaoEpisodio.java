@@ -14,8 +14,12 @@ public class VisaoEpisodio {
         this.sc = sc;
     }
 
-    public Episodio leEpisodio(int idSerie) {
-        System.out.println("\n=== Criar Novo Episódio ===");
+    public Episodio leEpisodio(int idSerie, boolean alterar) {
+        if (alterar) {
+            System.out.println("\n=== Alterar Episódio ===");
+        } else {
+            System.out.println("\n=== Criar Novo Episódio ===");
+        }
         System.out.print("Título: ");
         String titulo = sc.nextLine();
         

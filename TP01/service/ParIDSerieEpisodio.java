@@ -65,21 +65,21 @@ public class ParIDSerieEpisodio implements RegistroArvoreBMais<ParIDSerieEpisodi
 
     @Override
     public int compareTo(ParIDSerieEpisodio outro) {
-        // Garante que não ocorrerá NullPointerException
-        if (outro == null) return 1;
-
-        // Compara primeiro pelo idSerie
-        if (this.idSerie < outro.idSerie) return -1;
-        if (this.idSerie > outro.idSerie) return 1;
-
-        // Se idSerie for igual, compara pelo idEpisodio
-        // Importante: comparação com -1 deve tratar como caso especial para busca
-        if (outro.idEpisodio == -1) return 0; // Considera match para buscas com chave parcial
-
-        if (this.idEpisodio < outro.idEpisodio) return -1;
-        if (this.idEpisodio > outro.idEpisodio) return 1;
-
-        return 0; // Ambos iguais
+        // Primeiro compara pelo idSerie
+        if (this.idSerie != outro.idSerie) {
+            return this.idSerie - outro.idSerie;
+        }
+        
+        // Caso especial: se estamos buscando todos os episódios de uma série
+        // usando idEpisodio = -1, consideramos que é menor que qualquer outro par
+        if (this.idEpisodio == -1) {
+            return -1; // Sempre menor que qualquer episódio real
+        } else if (outro.getIdEpisodio() == -1) {
+            return 1; // Sempre maior que o elemento de busca
+        }
+        
+        // Caso normal: se idSerie for igual, compara pelo idEpisodio
+        return this.idEpisodio - outro.idEpisodio;
     }
 
 

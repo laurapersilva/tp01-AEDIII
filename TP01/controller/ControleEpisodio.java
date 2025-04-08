@@ -2,9 +2,14 @@ package TP01.controller;
 
 import java.util.ArrayList;
 import java.util.Scanner;
-import TP01.model.*;
-import TP01.service.*;
-import TP01.view.*;
+
+import TP01.model.Episodio;
+import TP01.model.Serie;
+import TP01.service.Arquivo;
+import TP01.service.ParIDSerieEpisodio;
+import TP01.service.RelacionamentoSerieEpisodio;
+import TP01.view.VisaoEpisodio;
+import TP01.view.VisaoSerie;
 
 public class ControleEpisodio {
     private Scanner sc;
@@ -30,7 +35,6 @@ public class ControleEpisodio {
             System.out.println("1) Listar todas as séries");
             System.out.println("2) Gerenciar episódios de uma série específica");
             System.out.println("3) Buscar episódio por nome");
-            System.out.println("4) Visualizar estrutura da Árvore B+ de relacionamentos");
             System.out.println("0) Retornar ao menu anterior");
             System.out.print("Escolha uma opção: ");
 
@@ -41,7 +45,6 @@ public class ControleEpisodio {
                 case 1 -> listarSeries();
                 case 2 -> gerenciarEpisodiosPorNome();
                 case 3 -> buscarEpisodioPorNome();
-                case 4 -> visualizarArvore();
                 default -> {
                     if (op != 0) {
                         System.out.println("Opção inválida!");
@@ -134,7 +137,6 @@ public class ControleEpisodio {
             System.out.println("3) Alterar episódio");
             System.out.println("4) Excluir episódio");
             System.out.println("5) Listar todos os episódios desta série");
-            System.out.println("6) Listar episódios por temporada");
             System.out.println("0) Retornar ao menu anterior");
             System.out.print("Escolha uma opção: ");
 
@@ -147,7 +149,6 @@ public class ControleEpisodio {
                 case 3 -> alterarEpisodioPorNome(idSerie);
                 case 4 -> excluirEpisodioPorNome(idSerie);
                 case 5 -> listarEpisodiosDaSerie(idSerie);
-                case 6 -> listarEpisodiosPorTemporada(idSerie);
                 default -> {
                     if (op != 0) {
                         System.out.println("Opção inválida!");
@@ -165,7 +166,7 @@ public class ControleEpisodio {
             return;
         }
         
-        Episodio episodio = visaoEpisodio.leEpisodio(idSerie);
+        Episodio episodio = visaoEpisodio.leEpisodio(idSerie, false);
         if (episodio == null) {
             System.out.println("Operação cancelada.");
             return;
@@ -176,13 +177,11 @@ public class ControleEpisodio {
         // Importante: atualiza o ID no objeto episódio após a criação
         episodio.setId(id);
         
-        // Atualiza o índice na árvore B+
-        relacionamento.atualizarIndicesAposOperacao(episodio, "create");
+
+        // Verifica se o relacionamento foi adicionado corretamente
+        ParIDSerieEpisodio parTeste = new ParIDSerieEpisodio(idSerie, id);
+        ArrayList<ParIDSerieEpisodio> paresEncontrados = relacionamento.arvoreRelacionamento.read(parTeste);
         
-        // Adiciona explicitamente o relacionamento entre série e episódio
-        relacionamento.adicionarRelacionamento(idSerie, id);
-        
-        System.out.println("Episódio criado com sucesso! ID: " + id);
     }
 
     private void buscarEpisodioPorId() throws Exception {
@@ -337,7 +336,7 @@ public class ControleEpisodio {
             return;
         }
         
-        Episodio episodioNovo = visaoEpisodio.leEpisodio(idSerie);
+        Episodio episodioNovo = visaoEpisodio.leEpisodio(idSerie, true);
         if (episodioNovo == null) {
             System.out.println("Operação cancelada.");
             return;
@@ -444,37 +443,31 @@ public class ControleEpisodio {
     }
 
     private void listarEpisodiosDaSerie(int idSerie) throws Exception {
-        ArrayList<Episodio> episodios = relacionamento.getEpisodiosDaSerie(idSerie);
-        visaoEpisodio.mostraListaEpisodios(episodios);
-    }
-    
-    private void listarEpisodiosPorTemporada(int idSerie) throws Exception {
-        System.out.print("Digite o número da temporada: ");
-        int temporada = sc.nextInt();
-        sc.nextLine(); // Limpar buffer
+        System.out.println("\n======= LISTANDO EPISÓDIOS DA SÉRIE ID: " + idSerie + " =======");
         
-        ArrayList<Episodio> episodios = relacionamento.getEpisodiosPorTemporada(idSerie, temporada);
-        System.out.println("\nEpisódios da Temporada " + temporada + ":");
+        // Primeiro verificar se a série existe
+        Serie serie = arqSerie.read(idSerie);
+        if (serie == null) {
+            System.out.println("Série não encontrada com ID: " + idSerie);
+            return;
+        }
+        
+        System.out.println("Série: " + serie.getTitulo());
+        
+        // Obter episódios usando o método padrão do relacionamento
+        ArrayList<Episodio> episodios = relacionamento.getEpisodiosDaSerie(idSerie);
+        
+        if (episodios.isEmpty()) {
+            System.out.println("\nNão há episódios cadastrados para esta série.");
+            return;
+        }
+        
+        // Mostrar quantidade encontrada
+        System.out.println("\nForam encontrados " + episodios.size() + " episódio(s):");
+        
+        // Exibir os episódios
         visaoEpisodio.mostraListaEpisodios(episodios);
     }
-    
-    private void visualizarArvore() throws Exception {
-        try {
-            System.out.println("\n=== Visualização da Árvore B+ de Relacionamentos Série-Episódio ===");
-            relacionamento.imprimirArvore();
-            
-            // Exibir estatísticas gerais
-            int totalSeries = arqSerie.ultimoId();
-            int totalEpisodios = arqEpisodios.ultimoId();
-            
-            System.out.println("\nEstatísticas gerais:");
-            System.out.println("Total de séries cadastradas: " + totalSeries);
-            System.out.println("Total de episódios cadastrados: " + totalEpisodios);
-            
-            System.out.println("\nPressione ENTER para continuar...");
-            sc.nextLine();
-        } catch (Exception e) {
-            System.out.println("Erro ao visualizar a árvore: " + e.getMessage());
-        }
-    }
+
+
 }

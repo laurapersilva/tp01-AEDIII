@@ -1,29 +1,59 @@
 package TP01.service;
 
-import java.io.IOException;
-import TP01.model.*;
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.lang.reflect.Constructor;
+
+import TP01.model.Episodio;
+import TP01.model.Serie;
 
 public class RelacionamentoSerieEpisodio {
     private Arquivo<Episodio> arqEpisodios;
     private Arquivo<Serie> arqSerie;
-    private ArvoreBMais<ParIDSerieEpisodio> arvoreRelacionamento;
+    public ArvoreBMais<ParIDSerieEpisodio> arvoreRelacionamento; // Tornada pública para acesso de diagnóstico
+
+
+    public void testarInsercaoArvore() {
+        try {
+            // Cria um par simples para teste
+            ParIDSerieEpisodio par = new ParIDSerieEpisodio(1, 1);
+
+            // Tenta inserir na árvore
+            boolean resultado = arvoreRelacionamento.create(par);
+
+            System.out.println("Resultado da inserção de teste: " + resultado);
+
+            // Verifica se o par foi inserido
+            ArrayList<ParIDSerieEpisodio> busca = arvoreRelacionamento.read(par);
+            System.out.println("Elementos encontrados na busca: " + busca.size() + busca.toString());
+
+        } catch (Exception e) {
+            System.err.println("Erro no teste de inserção: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
 
     public RelacionamentoSerieEpisodio(Arquivo<Serie> arqSerie, Arquivo<Episodio> arqEpisodios) {
         this.arqSerie = arqSerie;
         this.arqEpisodios = arqEpisodios;
 
         try {
+            // IMPORTANTE: Usando caminho absoluto para garantir consistência
+            String diretorioAtual = System.getProperty("user.dir");
+            String caminhoData = diretorioAtual + "/TP01/TP01/Data";
+            
             // Verificar se o diretório de dados existe
-            java.io.File dataDir = new java.io.File("./TP01/Data");
+            java.io.File dataDir = new java.io.File(caminhoData);
             if (!dataDir.exists()) {
                 dataDir.mkdirs();
+                System.out.println("Diretório de dados criado: " + caminhoData);
             }
 
+            // Usar o caminho completo e absolutamente correto para o arquivo
+            String arquivoIndice = caminhoData + "/serieEpisodio.db";
+            
             // Verificar se o arquivo de índice existe
-            java.io.File idxFile = new java.io.File("./TP01/Data/serieEpisodio.idx");
+            java.io.File idxFile = new java.io.File(arquivoIndice);
             boolean arquivoNovo = !idxFile.exists();
 
             // Inicializa a árvore B+ para relacionamento
@@ -31,23 +61,54 @@ public class RelacionamentoSerieEpisodio {
             this.arvoreRelacionamento = new ArvoreBMais<>(
                     construtor,
                     4, // Ordem da árvore
-                    "./TP01/Data/serieEpisodio.idx"
+                    arquivoIndice
             );
 
             // Se o arquivo for novo, inicializa com um registro dummy
             if (arquivoNovo) {
-                System.out.println("Inicializando índice árvore B+ com registro inicial...");
                 try {
-                    ParIDSerieEpisodio dummy = new ParIDSerieEpisodio(0, 0);
-                    arvoreRelacionamento.create(dummy);
-                    arvoreRelacionamento.delete(dummy); // Remove em seguida
+                    testarInsercaoArvore();
                 } catch (Exception e) {
                     System.err.println("Erro ao inicializar árvore B+: " + e.getMessage());
                 }
+            } else {
+                // Verificar estado da árvore
+                verificarIntegridadeArvore();
             }
 
-            // Verificar estado da árvore
-            verificarIntegridadeArvore();
+            // Verificar se a árvore funciona corretamente com um teste básico
+            try {
+                
+                // Criar um par de teste
+                ParIDSerieEpisodio parTeste = new ParIDSerieEpisodio(999, 999);
+                
+                // Inserir o par na árvore
+                boolean resultadoInsercao = arvoreRelacionamento.create(parTeste);
+                
+                // Buscar o par inserido
+                ArrayList<ParIDSerieEpisodio> resultadoBusca = arvoreRelacionamento.read(parTeste);
+                boolean parEncontrado = false;
+                for (ParIDSerieEpisodio par : resultadoBusca) {
+                    if (par.getIdSerie() == 999 && par.getIdEpisodio() == 999) {
+                        parEncontrado = true;
+                        break;
+                    }
+                }
+                
+                // Remover o par de teste
+                boolean resultadoRemocao = arvoreRelacionamento.delete(parTeste);
+                
+                // Verificar se a árvore está funcional
+                if (!(resultadoInsercao && parEncontrado && resultadoRemocao)) {
+                    reconstruirIndice();
+                } 
+            } catch (Exception e) {
+                System.err.println("ERRO no teste de sanidade da árvore B+: " + e.getMessage());
+                e.printStackTrace();
+                
+                // Se o teste falhar, tenta reconstruir o índice
+                reconstruirIndice();
+            }
 
         } catch (Exception e) {
             System.err.println("Erro ao inicializar árvore B+: " + e.getMessage());
@@ -59,8 +120,6 @@ public class RelacionamentoSerieEpisodio {
         try {
             boolean vazia = arvoreRelacionamento.empty();
             if (vazia) {
-                System.err.println("AVISO: Árvore B+ está vazia. O sistema usará o método alternativo até que o índice seja reconstruído.");
-
                 // Tentar reconstruir o índice automaticamente
                 reconstruirIndice();
             }
@@ -72,7 +131,6 @@ public class RelacionamentoSerieEpisodio {
     // Método para reconstruir o índice completo
     private void reconstruirIndice() {
         try {
-            System.out.println("Iniciando reconstrução do índice da árvore B+...");
             int totalRegistros = 0;
 
             // Percorre todos os episódios e reconstrói a árvore
@@ -90,13 +148,11 @@ public class RelacionamentoSerieEpisodio {
                 }
             }
 
-            System.out.println("Reconstrução do índice concluída. " + totalRegistros + " registros indexados.");
         } catch (Exception e) {
             System.err.println("Falha na reconstrução do índice: " + e.getMessage());
         }
     }
     
-    // Adicionar um relacionamento entre série e episódio
     // Adicionar um relacionamento entre série e episódio
     public boolean adicionarRelacionamento(int idSerie, int idEpisodio) throws Exception {
         // Verifica se a série existe
@@ -161,20 +217,42 @@ public class RelacionamentoSerieEpisodio {
                         System.err.println("Erro ao verificar se a árvore está vazia: " + e.getMessage());
                     }
 
-                    resultado = arvoreRelacionamento.create(par);
 
-                    if (!resultado && tentativas == 3) {
-                        System.err.println("AVISO: Falha ao inserir na árvore B+ o par (" + idSerie + ", " + idEpisodio + ") após " + tentativas + " tentativas");
+                        // Tenta inserir o elemento
+                        resultado = arvoreRelacionamento.create(par);
+                        System.out.println("Tentativa " + tentativas + ": " + (resultado ? "Sucesso" : "Falha"));
 
-                        // Força uma reconstrução manual apenas como último recurso
-                        try {
-                            // Implementação de reparo manual da árvore
-                            criarRelacionamentoManualmente(idSerie, idEpisodio);
-                            return true; // Se chegar aqui, conseguimos registrar o relacionamento
-                        } catch (Exception repairEx) {
-                            System.err.println("Falha no reparo manual: " + repairEx.getMessage());
-                            // Continua com o resultado atual
+                    
+                    // Verificar se a inserção realmente funcionou fazendo uma leitura direta
+                    ArrayList<ParIDSerieEpisodio> testeLeitura = arvoreRelacionamento.read(par);
+                    boolean encontrado = false;
+                    for (ParIDSerieEpisodio p2 : testeLeitura) {
+                        if (p2.getIdSerie() == par.getIdSerie() && p2.getIdEpisodio() == par.getIdEpisodio()) {
+                            encontrado = true;
+                            break;
                         }
+                    }
+                    System.out.println("Verificação de inserção: " + (encontrado ? "O par foi encontrado após inserção" : "O par NÃO foi encontrado após inserção!"));
+                    
+                    // Se não encontrou mesmo após o sucesso da inserção, algo está errado com a persistência
+                    if (resultado && !encontrado) {
+                        System.out.println("ALERTA: Árvore B+ retornou sucesso na inserção, mas elemento não foi encontrado depois.");
+                        System.out.println("Isto pode indicar um problema de persistência ou corrupção da árvore.");
+                        
+                        // Forçar a inserção novamente apenas como teste
+                        System.out.println("Tentando inserção forçada para diagnóstico...");
+                        arvoreRelacionamento.create(new ParIDSerieEpisodio(idSerie, idEpisodio));
+                        
+                        // Verificar se agora o elemento foi inserido
+                        testeLeitura = arvoreRelacionamento.read(par);
+                        encontrado = false;
+                        for (ParIDSerieEpisodio p2 : testeLeitura) {
+                            if (p2.getIdSerie() == par.getIdSerie() && p2.getIdEpisodio() == par.getIdEpisodio()) {
+                                encontrado = true;
+                                break;
+                            }
+                        }
+                        System.out.println("Após inserção forçada: " + (encontrado ? "SUCESSO" : "FALHA PERSISTENTE"));
                     }
                 } catch (Exception e) {
                     ultimoErro = e;
@@ -182,17 +260,6 @@ public class RelacionamentoSerieEpisodio {
 
                     // Pequeno atraso entre tentativas
                     try { Thread.sleep(100); } catch (InterruptedException ie) { }
-
-                    // Se a operação falhar devido a uma árvore corrompida, tenta repará-la
-                    if (tentativas == 2) {
-                        try {
-                            System.err.println("Tentando reparar a árvore B+ antes da última tentativa");
-                            criarRelacionamentoManualmente(idSerie, idEpisodio);
-                            return true;
-                        } catch (Exception repairEx) {
-                            System.err.println("Falha no reparo: " + repairEx.getMessage());
-                        }
-                    }
                 }
             }
 
@@ -208,318 +275,122 @@ public class RelacionamentoSerieEpisodio {
         }
     }
     
-    // Método de contingência para criar um relacionamento quando a árvore falha
-    private void criarRelacionamentoManualmente(int idSerie, int idEpisodio) throws Exception {
-        // Esta é uma solução alternativa para quando a árvore B+ falha completamente
-        System.err.println("Utilizando método alternativo para criar relacionamento");
-        
-        // Tenta criar um diretório de debug se não existir
-        try {
-            java.io.File debugDir = new java.io.File("./TP01/debug");
-            if (!debugDir.exists()) {
-                debugDir.mkdirs();
-            }
-        } catch (Exception e) {
-            System.err.println("Erro ao criar diretório de debug: " + e.getMessage());
-        }
-        
-        // Diagnóstico - salva o estado da árvore antes da operação
-        boolean arvoreVaziaInicial = false;
-        try {
-            arvoreVaziaInicial = arvoreRelacionamento.empty();
-            java.io.FileOutputStream diagOut = new java.io.FileOutputStream("./TP01/debug/arvore_antes_reparo.txt", true);
-            java.io.PrintStream ps = new java.io.PrintStream(diagOut);
-            ps.println("Diagnóstico antes de inserir (" + idSerie + "," + idEpisodio + ")");
-            ps.println("Árvore vazia? " + arvoreVaziaInicial);
-            ps.println("Timestamp: " + new java.util.Date());
-            ps.println("--------------------------------------------");
-            ps.close();
-            diagOut.close();
-        } catch (Exception e) {
-            System.err.println("Erro ao diagnosticar árvore: " + e.getMessage());
-        }
-        
-        // Força a recriação da árvore B+ independentemente do estado atual
-        // para resolver problemas de corrupção do arquivo de índice
-        System.err.println("Tentando reconstruir o índice da árvore B+...");
-        
-        // Precisamos criar uma nova instância da árvore B+
-        try {
-            // Tenta criar uma nova árvore do zero (potencialmente sobrescrevendo o arquivo)
-            Constructor<ParIDSerieEpisodio> construtor = ParIDSerieEpisodio.class.getConstructor();
-            
-            // Primeiro salva o arquivo atual como backup
-            java.io.File arquivoAntigo = new java.io.File("./TP01/Data/serieEpisodio.idx");
-            java.io.File arquivoBackup = new java.io.File("./TP01/Data/serieEpisodio.idx.bak");
-            
-            // Faz backup do arquivo antigo
-            if (arquivoAntigo.exists()) {
-                arquivoAntigo.renameTo(arquivoBackup);
-            }
-            
-            // Cria uma nova árvore diretamente no arquivo original
-            this.arvoreRelacionamento = new ArvoreBMais<>(
-                construtor,
-                4, // Ordem da árvore (ajustável conforme necessário)
-                "./TP01/Data/serieEpisodio.idx"
-            );
-            
-            // Registra o relacionamento solicitado primeiro
-            ParIDSerieEpisodio par = new ParIDSerieEpisodio(idSerie, idEpisodio);
-            boolean primeiroInserido = arvoreRelacionamento.create(par);
-            System.err.println("Inserção do par solicitado (" + idSerie + "," + idEpisodio + "): " + 
-                             (primeiroInserido ? "SUCESSO" : "FALHA"));
-            
-            // Reconstrua o índice a partir dos dados primários
-            int ultimoIdEpisodio = arqEpisodios.ultimoId();
-            int sucessos = 0;
-            for (int i = 1; i <= ultimoIdEpisodio; i++) {
-                Episodio ep = arqEpisodios.read(i);
-                if (ep != null && ep.getSerieId() > 0 && 
-                    !(ep.getSerieId() == idSerie && ep.getId() == idEpisodio)) { // Evita duplicação
-                    ParIDSerieEpisodio parAtual = new ParIDSerieEpisodio(ep.getSerieId(), ep.getId());
-                    try {
-                        boolean inserido = arvoreRelacionamento.create(parAtual);
-                        if (inserido) sucessos++;
-                    } catch (Exception e) {
-                        // Ignore erros individuais durante a reconstrução
-                    }
-                }
-            }
-            
-            System.err.println("Reconstrução completa concluída: " + sucessos + " relacionamentos adicionados à árvore");
-            
-        } catch (Exception e) {
-            System.err.println("Falha na reconstrução total da árvore: " + e.getMessage());
-        }
-        
-        // Diagnóstico final - verifica se a operação teve sucesso
-        try {
-            boolean arvoreVaziaFinal = arvoreRelacionamento.empty();
-            ParIDSerieEpisodio testPar = new ParIDSerieEpisodio(idSerie, idEpisodio);
-            ArrayList<ParIDSerieEpisodio> resultados = arvoreRelacionamento.read(testPar);
-            
-            java.io.FileOutputStream diagOut = new java.io.FileOutputStream("./TP01/debug/arvore_apos_reparo.txt", true);
-            java.io.PrintStream ps = new java.io.PrintStream(diagOut);
-            ps.println("Diagnóstico após inserir (" + idSerie + "," + idEpisodio + ")");
-            ps.println("Árvore vazia? " + arvoreVaziaFinal);
-            ps.println("Encontrados " + resultados.size() + " resultados ao buscar o par");
-            ps.println("Timestamp: " + new java.util.Date());
-            ps.println("--------------------------------------------");
-            ps.close();
-            diagOut.close();
-        } catch (Exception e) {
-            System.err.println("Erro ao diagnosticar árvore após reparo: " + e.getMessage());
-        }
-    }
-    
-    
     // Remover um relacionamento entre série e episódio
     public boolean removerRelacionamento(int idSerie, int idEpisodio) throws Exception {
         ParIDSerieEpisodio par = new ParIDSerieEpisodio(idSerie, idEpisodio);
         return arvoreRelacionamento.delete(par);
     }
     
-    // Buscar todos os episódios de uma série usando a árvore B+
-    public ArrayList<Episodio> getEpisodiosDaSerieArvoreBMais(int idSerie) throws Exception {
-        ArrayList<Episodio> episodios = new ArrayList<>();
-        
-        // Cria um par para busca (com episódio -1 para buscar todos os episódios da série)
-        ParIDSerieEpisodio parBusca = new ParIDSerieEpisodio(idSerie, -1);
-        
-        // Busca todos os pares que começam com o idSerie
-        ArrayList<ParIDSerieEpisodio> pares = arvoreRelacionamento.read(parBusca);
-        
-        // Para cada par encontrado, recupera o episódio
-        for (ParIDSerieEpisodio par : pares) {
-            if (par.getIdSerie() == idSerie) { // Verifica se o ID da série corresponde
-                Episodio ep = arqEpisodios.read(par.getIdEpisodio());
-                if (ep != null) {
-                    episodios.add(ep);
-                }
-            } else {
-                // Como a árvore B+ retorna todos os elementos maiores ou iguais,
-                // podemos parar quando o idSerie for diferente
-                break;
-            }
-        }
-        
-        return episodios;
-    }
-    
     // Verificar se uma série tem episódios
     public boolean serieTemEpisodios(int idSerie) throws Exception {
-        // Tenta buscar episódios usando a árvore B+
+        boolean resultado = false;
+        
         try {
+            // Tentativa 1: Usar a árvore B+
+            System.out.println("Verificando se série ID=" + idSerie + " tem episódios via árvore B+");
             ParIDSerieEpisodio parBusca = new ParIDSerieEpisodio(idSerie, -1);
             ArrayList<ParIDSerieEpisodio> pares = arvoreRelacionamento.read(parBusca);
+            
+            System.out.println("Árvore B+ retornou " + pares.size() + " pares para a série ID=" + idSerie);
             
             // Verifica se algum par com o idSerie foi encontrado
             for (ParIDSerieEpisodio par : pares) {
                 if (par.getIdSerie() == idSerie) {
-                    return true;
+                    System.out.println("Encontrado episódio ID=" + par.getIdEpisodio() + " para série ID=" + idSerie);
+                    resultado = true;
+                    break;
                 }
             }
-            return false;
+            
+            // Se não encontrar nada pela árvore, tenta método alternativo
+            if (!resultado) {
+                System.out.println("Árvore B+ não encontrou episódios. Usando busca alternativa...");
+                resultado = verificarEpisodiosPorBuscaDireta(idSerie);
+            }
+            
+            return resultado;
         } catch (Exception e) {
-            // Fallback: busca linear em caso de erro na árvore B+
-            System.err.println("Erro ao buscar na árvore B+, usando método alternativo: " + e.getMessage());
-            return serieTemEpisodiosAlternativo(idSerie);
+            System.err.println("Erro ao verificar episódios pela árvore B+: " + e.getMessage());
+            
+            // Em caso de erro, usa o método alternativo
+            return verificarEpisodiosPorBuscaDireta(idSerie);
         }
     }
     
-    // Método alternativo para verificar se uma série tem episódios (busca linear)
-    private boolean serieTemEpisodiosAlternativo(int idSerie) throws Exception {
-        // Verificar episódios até encontrar um com o id da série
+    // Método alternativo para verificar episódios por busca direta
+    private boolean verificarEpisodiosPorBuscaDireta(int idSerie) throws Exception {
+        System.out.println("Verificando episódios por busca direta para série ID=" + idSerie);
+        
         int ultimoId = arqEpisodios.ultimoId();
         for (int i = 1; i <= ultimoId; i++) {
             Episodio ep = arqEpisodios.read(i);
             if (ep != null && ep.getSerieId() == idSerie) {
+                System.out.println("Encontrado episódio ID=" + ep.getId() + " (busca direta)");
+                
+                // Tenta corrigir a árvore B+
+                System.out.println("Corrigindo relação na árvore B+ para série ID=" + idSerie + 
+                                   ", episódio ID=" + ep.getId());
+                adicionarRelacionamento(idSerie, ep.getId());
+                
                 return true;
             }
         }
+        
+        System.out.println("Nenhum episódio encontrado para série ID=" + idSerie + " (busca direta)");
         return false;
     }
     
-    // Obter todos os episódios de uma série (método original, busca linear)
-    // Obter todos os episódios de uma série (método principal)
+    // Obter todos os episódios de uma série
     public ArrayList<Episodio> getEpisodiosDaSerie(int idSerie) throws Exception {
-        ArrayList<Episodio> resultadoArvore = new ArrayList<>();
-
-        try {
-            // Primeiro busca pelo método alternativo para garantir que temos todos os episódios
-            ArrayList<Episodio> resultadoAlternativo = getEpisodiosDaSerieAlternativo(idSerie);
-
-            // Se não houver episódios pelo método alternativo, não há episódios para esta série
-            if (resultadoAlternativo.isEmpty()) {
-                return resultadoAlternativo; // Retorna lista vazia
-            }
-
-            // Tenta buscar usando a árvore B+
-            try {
-                resultadoArvore = getEpisodiosDaSerieArvoreBMais(idSerie);
-            } catch (Exception e) {
-                System.err.println("Erro ao buscar na árvore B+: " + e.getMessage());
-                resultadoArvore = new ArrayList<>(); // Reinicializa em caso de erro
-            }
-
-            // Verifica se há registros na árvore
-            if (resultadoArvore.isEmpty()) {
-                System.err.println("Nenhum episódio encontrado na árvore B+ para a série " + idSerie +
-                        ", verificando método alternativo");
-
-                System.err.println("Encontrados " + resultadoAlternativo.size() +
-                        " episódios pelo método alternativo. Reparando relacionamentos...");
-
-                // Recria o arquivo de índice se estiver vazio
-                boolean arvoreVazia = false;
-                try {
-                    arvoreVazia = arvoreRelacionamento.empty();
-                } catch (Exception e) {
-                    System.err.println("Erro ao verificar se a árvore está vazia: " + e.getMessage());
-                }
-
-                if (arvoreVazia) {
-                    System.err.println("Árvore B+ está vazia. Reconstruindo índice completo...");
-                    try {
-                        // Usar o método de reconstrução sistemática em vez de apenas um relacionamento
-                        reconstruirIndice();
-                        // Também tenta adicionar o primeiro episódio manualmente como garantia
-                        if (!resultadoAlternativo.isEmpty()) {
-                            criarRelacionamentoManualmente(idSerie, resultadoAlternativo.get(0).getId());
-                        }
-                    } catch (Exception e) {
-                        System.err.println("Falha ao reconstruir índice: " + e.getMessage());
-                    }
-                }
-
-                // Adiciona todos os relacionamentos que estavam faltando
-                for (Episodio ep : resultadoAlternativo) {
-                    // Silencia mensagens de erro temporariamente
-                    try {
-                        boolean sucesso = adicionarRelacionamento(idSerie, ep.getId());
-                        if (!sucesso) {
-                            // Se falhar, tenta usar o método manual
-                            criarRelacionamentoManualmente(idSerie, ep.getId());
-                        }
-                    } catch (Exception ex) {
-                        System.err.println("Erro ao reparar relacionamento para episódio ID " + ep.getId() + ": " + ex.getMessage());
-                    }
-                }
-
-                // Após a reconstrução, tenta recuperar da árvore novamente
-                try {
-                    resultadoArvore = getEpisodiosDaSerieArvoreBMais(idSerie);
-                } catch (Exception e) {
-                    System.err.println("Ainda não foi possível recuperar da árvore após reparo: " + e.getMessage());
-                    // Se ainda falhar, usa o método alternativo
-                    return resultadoAlternativo;
-                }
-            }
-
-            // Verifica se há diferenças entre os resultados da árvore e do método alternativo
-            if (resultadoArvore.size() != resultadoAlternativo.size()) {
-                System.err.println("Diferença entre árvore (" + resultadoArvore.size() +
-                        " episódios) e método alternativo (" + resultadoAlternativo.size() +
-                        " episódios). Combinando resultados...");
-
-                // Combine os dois conjuntos de resultados para garantir que todos os episódios sejam retornados
-                ArrayList<Episodio> resultadoCombinado = new ArrayList<>(resultadoAlternativo);
-                for (Episodio ep : resultadoArvore) {
-                    boolean encontrado = false;
-                    for (Episodio epAlt : resultadoAlternativo) {
-                        if (ep.getId() == epAlt.getId()) {
-                            encontrado = true;
-                            break;
-                        }
-                    }
-                    if (!encontrado) {
-                        resultadoCombinado.add(ep);
-                    }
-                }
-
-                // Tenta corrigir os relacionamentos faltantes
-                if (resultadoArvore.size() < resultadoAlternativo.size()) {
-                    System.err.println("Faltam elementos na árvore B+. Tentando adicionar os faltantes...");
-                    for (Episodio ep : resultadoAlternativo) {
-                        boolean encontrado = false;
-                        for (Episodio epArvore : resultadoArvore) {
-                            if (ep.getId() == epArvore.getId()) {
-                                encontrado = true;
-                                break;
-                            }
-                        }
-                        if (!encontrado) {
-                            try {
-                                adicionarRelacionamento(idSerie, ep.getId());
-                            } catch (Exception e) {
-                                System.err.println("Erro ao adicionar relacionamento faltante: " + e.getMessage());
-                            }
-                        }
-                    }
-                }
-
-                return resultadoCombinado;
-            }
-
-            // Se os tamanhos são iguais, assume que os resultados da árvore estão corretos
-            return resultadoArvore;
-        } catch (Exception e) {
-            System.err.println("Erro geral ao buscar episódios da série: " + e.getMessage());
-            return getEpisodiosDaSerieAlternativo(idSerie);
-        }
-    }
-
-    // Método alternativo para obter episódios (busca linear)
-    private ArrayList<Episodio> getEpisodiosDaSerieAlternativo(int idSerie) throws Exception {
         ArrayList<Episodio> episodios = new ArrayList<>();
-        int ultimoId = arqEpisodios.ultimoId();
-        for (int i = 1; i <= ultimoId; i++) {
-            Episodio ep = arqEpisodios.read(i);
-            if (ep != null && ep.getSerieId() == idSerie) {
-                episodios.add(ep);
+        
+        try {
+            // Abordagem principal: Usar a árvore B+ para buscar episódios
+            ParIDSerieEpisodio parBusca = new ParIDSerieEpisodio(idSerie, -1);
+            ArrayList<ParIDSerieEpisodio> pares = arvoreRelacionamento.read(parBusca);
+                        
+            // Para cada par encontrado, recupera o episódio
+            for (ParIDSerieEpisodio par : pares) {
+                if (par.getIdSerie() == idSerie) { // Verifica se o ID da série corresponde
+                    Episodio ep = arqEpisodios.read(par.getIdEpisodio());
+                    if (ep != null) {
+                        episodios.add(ep);
+                    }
+                } else {
+                    // Como a árvore B+ retorna todos os elementos maiores ou iguais,
+                    // podemos parar quando o idSerie for diferente
+                    break;
+                }
+            }
+            
+            // Se não encontrou episódios pela árvore, tenta o método alternativo
+            if (episodios.isEmpty()) {
+                
+                // Busca linear: verificar todos os episódios diretamente no arquivo
+                int ultimoId = arqEpisodios.ultimoId();
+                for (int i = 1; i <= ultimoId; i++) {
+                    Episodio ep = arqEpisodios.read(i);
+                    if (ep != null && ep.getSerieId() == idSerie) {
+                        episodios.add(ep);
+                        
+                        // Tenta corrigir a árvore B+ adicionando o relacionamento que faltava
+                        adicionarRelacionamento(idSerie, ep.getId());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("ERRO na busca por episódios: " + e.getMessage());
+            
+            // Em caso de erro, tenta o método alternativo
+            int ultimoId = arqEpisodios.ultimoId();
+            for (int i = 1; i <= ultimoId; i++) {
+                Episodio ep = arqEpisodios.read(i);
+                if (ep != null && ep.getSerieId() == idSerie) {
+                    episodios.add(ep);
+                }
             }
         }
+        
         return episodios;
     }
     
@@ -548,6 +419,22 @@ public class RelacionamentoSerieEpisodio {
         }
         
         return contagem;
+    }
+    
+    // Organizar episódios por temporada
+    public HashMap<Integer, ArrayList<Episodio>> organizarEpisodiosPorTemporada(int idSerie) throws Exception {
+        HashMap<Integer, ArrayList<Episodio>> resultado = new HashMap<>();
+        ArrayList<Episodio> episodios = getEpisodiosDaSerie(idSerie);
+        
+        for (Episodio ep : episodios) {
+            int temporada = ep.getNumTemporada();
+            if (!resultado.containsKey(temporada)) {
+                resultado.put(temporada, new ArrayList<>());
+            }
+            resultado.get(temporada).add(ep);
+        }
+        
+        return resultado;
     }
     
     // Atualizar os índices após criação, atualização ou remoção de episódios
@@ -581,65 +468,6 @@ public class RelacionamentoSerieEpisodio {
         return episodiosPorTemporada.size();
     }
 
-    // Imprimir a árvore de relacionamentos para debugging
-    public void imprimirArvore() throws Exception {
-        System.out.println("Estrutura da Árvore B+ de Relacionamentos:");
-        try {
-            arvoreRelacionamento.print();
-            
-            // Diagnóstico adicional
-            System.out.println("\nDiagnóstico da árvore:");
-            try {
-                ParIDSerieEpisodio test = new ParIDSerieEpisodio(1, 1);
-                ArrayList<ParIDSerieEpisodio> pares = arvoreRelacionamento.read(test);
-                System.out.println("Buscando o par (1, 1) na árvore...");
-                System.out.println("Encontrados " + pares.size() + " resultados para (1, 1)");
-                for (ParIDSerieEpisodio p : pares) {
-                    System.out.println(" - " + p);
-                }
-            } catch (Exception e) {
-                System.out.println("Erro ao buscar par na árvore: " + e.getMessage());
-            }
-            
-            // Teste adicional - força inserção (temporário)
-            boolean vazia = arvoreRelacionamento.empty();
-            System.out.println("Árvore está vazia? " + vazia);
-            
-            // Salva estado da árvore para análise
-            try {
-                java.io.FileOutputStream fos = new java.io.FileOutputStream("./TP01/debug/arvore_diagnostico.txt");
-                java.io.PrintStream ps = new java.io.PrintStream(fos);
-                ps.println("Raiz da árvore no arquivo: ./TP01/Data/serieEpisodio.idx");
-                ps.println("Árvore está vazia? " + vazia);
-                ps.close();
-                fos.close();
-                System.out.println("Diagnóstico salvo em ./TP01/debug/arvore_diagnostico.txt");
-            } catch (Exception e) {
-                System.out.println("Erro ao salvar diagnóstico: " + e.getMessage());
-            }
-        } catch (Exception e) {
-            System.out.println("Erro ao imprimir árvore: " + e.getMessage());
-            e.printStackTrace();
-        }
-        
-        // Tenta reparar o índice, se necessário
-        try {
-            System.out.println("\nVerificando/reparando o índice da árvore...");
-            boolean vazia = arvoreRelacionamento.empty();
-            if (vazia) {
-                System.out.println("Árvore está vazia! Iniciando reparo completo...");
-                criarRelacionamentoManualmente(1, 1); // Tenta reconstruir completamente
-                
-                // Verifica novamente
-                boolean vaziaApos = arvoreRelacionamento.empty();
-                System.out.println("Árvore vazia após reparo? " + vaziaApos);
-            } else {
-                System.out.println("Árvore B+ possui raiz válida.");
-            }
-        } catch (Exception e) {
-            System.out.println("Erro durante verificação/reparo: " + e.getMessage());
-        }
-    }
     
     // Buscar série por nome (parcial ou completo)
     public ArrayList<Serie> buscarSeriePorNome(String nomeParcial) throws Exception {

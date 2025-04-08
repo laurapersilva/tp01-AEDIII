@@ -1,8 +1,14 @@
 package TP01.service;
 
-import java.io.*;
-import java.util.ArrayList;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+
 import TP01.interfaces.RegistroArvoreBMais;
 
 
@@ -141,7 +147,6 @@ public class ArvoreBMais<T extends RegistroArvoreBMais<T>> {
         maxFilhos = o;
         nomeArquivo = na;
 
-        // Abre (ou cria) o arquivo, escrevendo uma raiz empty, se necessário.
         arquivo = new RandomAccessFile(nomeArquivo, "rw");
         if (arquivo.length() < 16) {
             arquivo.writeLong(-1); // raiz empty
@@ -162,18 +167,25 @@ public class ArvoreBMais<T extends RegistroArvoreBMais<T>> {
     // O método retorna a lista de elementos que possuem a chave (considerando
     // a possibilidade chaves repetidas)
     public ArrayList<T> read(T elem) throws Exception {
+        
+        try {
+            // Recupera a raiz da árvore
+            long raiz;
+            arquivo.seek(0);
+            raiz = arquivo.readLong();
 
-        // Recupera a raiz da árvore
-        long raiz;
-        arquivo.seek(0);
-        raiz = arquivo.readLong();
-
-        // Executa a busca recursiva
-        if (raiz != -1)
-            return read1(elem, raiz);
-        else {
-            ArrayList<T> resposta = new ArrayList<>();
-            return resposta;
+            // Executa a busca recursiva
+            if (raiz != -1) {
+                ArrayList<T> resultado = read1(elem, raiz);
+                return resultado;
+            } else {
+                ArrayList<T> resposta = new ArrayList<>();
+                return resposta;
+            }
+        } catch (Exception e) {
+            System.err.println("ERRO na leitura da árvore B+: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
         }
     }
 
@@ -290,62 +302,89 @@ public class ArvoreBMais<T extends RegistroArvoreBMais<T>> {
     // função chama a segunda recursivamente, passando a raiz como referência.
     // Eventualmente, a árvore pode crescer para cima.
     public boolean create(T elem) throws Exception {
-
-        // Carrega a raiz
-        arquivo.seek(0);
-        long pagina;
-        pagina = arquivo.readLong();
-
-        // O processo de inclusão permite que os valores passados como referência
-        // sejam substituídos por outros valores, para permitir a divisão de páginas
-        // e crescimento da árvore. Assim, são usados os valores globais elemAux
-        // e chave2Aux. Quando há uma divisão, as chaves promovidas são armazenadas
-        // nessas variáveis.
-        elemAux = elem.clone();
-
-        // Se houver crescimento, então será criada uma página extra e será mantido um
-        // ponteiro para essa página. Os valores também são globais.
-        paginaAux = -1;
-        cresceu = false;
-
-        // Chamada recursiva para a inserção do par de chaves
-        boolean inserido = create1(pagina);
-
-        // Testa a necessidade de criação de uma nova raiz.
-        if (cresceu) {
-
-            // Cria a nova página que será a raiz. O ponteiro esquerdo da raiz
-            // será a raiz antiga e o seu ponteiro direito será para a nova página.
-            Pagina novaPagina = new Pagina(construtor, ordem);
-            novaPagina.elementos = new ArrayList<>(this.maxElementos);
-            novaPagina.elementos.add(elemAux);
-            novaPagina.filhos = new ArrayList<>(this.maxFilhos);
-            novaPagina.filhos.add(pagina);
-            novaPagina.filhos.add(paginaAux);
-
-            // Acha o espaço em disco. Testa se há páginas excluídas.
-            arquivo.seek(8);
-            long end = arquivo.readLong();
-            if(end==-1) {
-                end = arquivo.length();
-            } else { // reusa um endereço e atualiza a lista de excluídos no cabeçalho
-                arquivo.seek(end);
-                Pagina pa_excluida = new Pagina(construtor, ordem);
-                byte[] buffer = new byte[pa_excluida.TAMANHO_PAGINA];
-                arquivo.read(buffer);
-                pa_excluida.fromByteArray(buffer);
-                arquivo.seek(8);
-                arquivo.writeLong(pa_excluida.proxima);
-            }
-            arquivo.seek(end);
-            long raiz = arquivo.getFilePointer();
-            arquivo.write(novaPagina.toByteArray());
+        
+        try {
+            // Carrega a raiz
             arquivo.seek(0);
-            arquivo.writeLong(raiz);
-            inserido = true;
-        }
+            long pagina;
+            pagina = arquivo.readLong();
+            
 
-        return inserido;
+            // O processo de inclusão permite que os valores passados como referência
+            // sejam substituídos por outros valores, para permitir a divisão de páginas
+            // e crescimento da árvore. Assim, são usados os valores globais elemAux
+            // e chave2Aux. Quando há uma divisão, as chaves promovidas são armazenadas
+            // nessas variáveis.
+            elemAux = elem.clone();
+
+            // Se houver crescimento, então será criada uma página extra e será mantido um
+            // ponteiro para essa página. Os valores também são globais.
+            paginaAux = -1;
+            cresceu = false;
+
+            // Chamada recursiva para a inserção do par de chaves
+            boolean inserido = create1(pagina);
+
+            // Testa a necessidade de criação de uma nova raiz.
+            if (cresceu) {
+
+                // Cria a nova página que será a raiz. O ponteiro esquerdo da raiz
+                // será a raiz antiga e o seu ponteiro direito será para a nova página.
+                Pagina novaPagina = new Pagina(construtor, ordem);
+                novaPagina.elementos = new ArrayList<>(this.maxElementos);
+                novaPagina.elementos.add(elemAux);
+                novaPagina.filhos = new ArrayList<>(this.maxFilhos);
+                novaPagina.filhos.add(pagina);
+                novaPagina.filhos.add(paginaAux);
+
+                // Acha o espaço em disco. Testa se há páginas excluídas.
+                arquivo.seek(8);
+                long end = arquivo.readLong();
+                if(end==-1) {
+                    end = arquivo.length();
+                } else { // reusa um endereço e atualiza a lista de excluídos no cabeçalho
+                    arquivo.seek(end);
+                    Pagina pa_excluida = new Pagina(construtor, ordem);
+                    byte[] buffer = new byte[pa_excluida.TAMANHO_PAGINA];
+                    arquivo.read(buffer);
+                    pa_excluida.fromByteArray(buffer);
+                    arquivo.seek(8);
+                    arquivo.writeLong(pa_excluida.proxima);
+                }
+                arquivo.seek(end);
+                long raiz = arquivo.getFilePointer();
+                arquivo.write(novaPagina.toByteArray());
+                arquivo.seek(0);
+                arquivo.writeLong(raiz);
+                inserido = true;
+                
+            }
+            
+            // MODIFICAÇÃO PARA GARANTIR PERSISTÊNCIA: Força a sincronização do arquivo com o disco
+            arquivo.getFD().sync();
+            
+            // Verificação imediata se o elemento foi inserido corretamente
+            ArrayList<T> check = read(elem);
+            boolean encontrado = false;
+            if (check.size() > 0) {
+                for (T item : check) {
+                    if (item.compareTo(elem) == 0) {
+                        encontrado = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (!encontrado) {
+                System.out.println("ALERTA - Elemento não encontrado após inserção!");
+            }
+
+            return inserido;
+        } catch (Exception e) {
+            System.err.println("ERRO na inserção na árvore B+: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     // Função recursiva de inclusão. A função passa uma página de referência.

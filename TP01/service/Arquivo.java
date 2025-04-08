@@ -35,8 +35,12 @@ public class Arquivo<T extends Registro>
             arquivo.writeInt(0);
         } // end if
 
-        indiceDireto = new HashExtensivel<>(ParIDEndereco.class.getConstructor(), 4, this.nomeArquivo + ".d.idx",
-                this.nomeArquivo + ".c.idx");
+        // Simplificação dos nomes de arquivos de índice para evitar confusão
+        indiceDireto = new HashExtensivel<>(ParIDEndereco.class.getConstructor(), 4, 
+                this.nomeArquivo + ".idx",
+                this.nomeArquivo + ".hash");
+        
+        System.out.println("Arquivo inicializado: " + this.nomeArquivo);
     } // end Arquivo ( )
 
     /**

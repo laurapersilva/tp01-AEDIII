@@ -1,2 +1,0 @@
-Raiz da árvore no arquivo: ./TP01/Data/serieEpisodio.idx
-Árvore está vazia? false

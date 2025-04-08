@@ -1,13 +1,13 @@
 package TP01.view;
 
-import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Scanner;
-import TP01.model.*;
+
+import TP01.model.Episodio;
+import TP01.model.Serie;
 
 public class VisaoSerie {
     private Scanner sc;
@@ -16,8 +16,12 @@ public class VisaoSerie {
         this.sc = sc;
     }
 
-    public Serie leSerie() {
-        System.out.println("\n=== Criar Nova Série ===");
+    public Serie leSerie(boolean alterar) {
+        if (alterar) {
+            System.out.println("\n=== Alterar Série ===");
+         } else {
+            System.out.println("\n=== Criar Nova Série ===");
+        }
         System.out.print("Título: ");
         String titulo = sc.nextLine();
         
@@ -114,6 +118,44 @@ public class VisaoSerie {
 
         for (Episodio ep : episodios) {
             System.out.println(ep.toString());
+        }
+    }
+    
+    public void mostraTodosEpisodiosPorTemporada(Serie serie, HashMap<Integer, ArrayList<Episodio>> episodiosPorTemporada) {
+        if (serie == null) {
+            System.out.println("Série não encontrada.");
+            return;
+        }
+        
+        System.out.println("\n====================================");
+        System.out.println("   " + serie.getTitulo() + " (" + serie.getAno() + ")");
+        System.out.println("====================================");
+        System.out.println("Plataforma: " + serie.getPlataforma());
+        System.out.println("Sinopse: " + serie.getSinopse());
+        
+        if (episodiosPorTemporada.isEmpty()) {
+            System.out.println("\nNenhum episódio cadastrado para esta série.");
+            return;
+        }
+        
+        // Ordenar as temporadas para exibição
+        ArrayList<Integer> temporadas = new ArrayList<>(episodiosPorTemporada.keySet());
+        Collections.sort(temporadas);
+        
+        for (Integer temporada : temporadas) {
+            ArrayList<Episodio> episodios = episodiosPorTemporada.get(temporada);
+            
+            System.out.println("\n=== TEMPORADA " + temporada + " ===");
+            System.out.println("Total: " + episodios.size() + " episódio(s)");
+            
+            // Ordenar os episódios por ID
+            episodios.sort((ep1, ep2) -> ep1.getId() - ep2.getId());
+            
+            for (Episodio ep : episodios) {
+                System.out.println("\nEpisódio " + ep.getId() + ": " + ep.getTitulo());
+                System.out.println("Data: " + ep.getLancamento().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+                System.out.println("Duração: " + ep.getDuracaoMin() + " minutos");
+            }
         }
     }
 

@@ -24,21 +24,6 @@ public class Main {
         System.out.println("0) Sair");
         System.out.print("Escolha uma opção: ");
     }
-
-    // Este método foi substituído pelo ControleSerie
-    public static void menuSerie() throws Exception {
-        // Método mantido para compatibilidade, mas redirecionado para o controller
-        ControleSerie controleSerie = new ControleSerie(sc, arqSerie, arqEpisodios);
-        controleSerie.menuSerie();
-    }
-
-    // Este método foi substituído pelo ControleEpisodio
-    public static void menuEpisodio() throws Exception {
-        // Método mantido para compatibilidade, mas redirecionado para o controller
-        ControleEpisodio controleEpisodio = new ControleEpisodio(sc, arqEpisodios, arqSerie);
-        controleEpisodio.menuEpisodio();
-    }
-
     
 
     public static void main(String[] args) throws Exception {
@@ -50,8 +35,8 @@ public class Main {
             }
             
             // Inicializa os arquivos
-            arqEpisodios = new Arquivo<>("catalogo_episodios.bin", Episodio.class);
-            arqSerie = new Arquivo<>("catalogo_series.bin", Serie.class);
+            arqEpisodios = new Arquivo<>("catalogo_episodios.db", Episodio.class);
+            arqSerie = new Arquivo<>("catalogo_series.db", Serie.class);
     
             // Inicializa os controladores
             ControleSerie controleSerie = new ControleSerie(sc, arqSerie, arqEpisodios);
