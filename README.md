@@ -112,9 +112,7 @@ Conseguimos implementar todos os requisitos solicitados, incluindo:
 
 ### 🚧 Desafios Enfrentados
 
-O maior desafio foi a implementação e o uso correto da Árvore B+ para gerenciar o relacionamento entre séries e episódios. Enfrentamos alguns problemas de inconsistência na árvore, principalmente na inserção de novos relacionamentos. Para resolver esse problema, implementamos mecanismos de recuperação e verificação que garantem a consistência dos dados mesmo em caso de falha da árvore.
-
-Outro desafio foi garantir a integridade referencial entre séries e episódios. Implementamos verificações em diversos pontos do sistema para garantir que episódios não sejam "órfãos" e que séries com episódios não possam ser excluídas.
+O maior desafio foi a implementação e o uso correto da Árvore B+ para gerenciar o relacionamento entre séries e episódios. Enfrentamos alguns problemas de inconsistência na árvore, principalmente na inserção de novos relacionamentos. Para resolver esse problema, tentamos implementar mecanismos de recuperação e verificação que garantem a consistência dos dados mesmo em caso de falha da árvore.
 
 A implementação do método `compareTo()` na classe `ParIDSerieEpisodio` também exigiu atenção especial, pois precisávamos garantir que a busca na árvore B+ funcionasse corretamente, especialmente para encontrar todos os episódios de uma série específica.
 
@@ -130,13 +128,13 @@ Os mecanismos de recuperação implementados garantem a robustez do sistema, mes
 
 * As operações de inclusão, busca, alteração e exclusão de séries estão implementadas e funcionando corretamente? **Sim**
 * As operações de inclusão, busca, alteração e exclusão de episódios, por série, estão implementadas e funcionando corretamente? **Sim**
-* Essas operações usam a classe CRUD genérica para a construção do arquivo e as classes Tabela Hash Extensível e Árvore B+ como índices diretos e indiretos? **Sim**
+* Essas operações usam a classe CRUD genérica para a construção do arquivo e as classes Tabela Hash Extensível e Árvore B+ como índices diretos e indiretos? **Parcialmente**
 * O atributo de ID de série, como chave estrangeira, foi criado na classe de episódios? **Sim**
 * Há uma árvore B+ que registre o relacionamento 1:N entre episódios e séries? **Sim**
 * Há uma visualização das séries que mostre os episódios por temporada? **Sim**
 * A remoção de séries checa se há algum episódio vinculado a ela? **Sim**
 * A inclusão da série em um episódio se limita às séries existentes? **Sim**
-* O trabalho está funcionando corretamente? **Sim**
+* O trabalho está funcionando corretamente? **Parcialmente**
 * O trabalho está completo? **Sim**
 * O trabalho é original e não a cópia de um trabalho de outro grupo? **Sim**
 
