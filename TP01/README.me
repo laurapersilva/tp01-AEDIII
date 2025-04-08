@@ -1,103 +1,59 @@
-# Relatório do Trabalho Prático - PUCFlix 1.0
+PUCFlix 1.0 - Sistema de Gerenciamento de Séries e Episódios
+Descrição do Projeto
+O PUCFlix é um sistema completo de gerenciamento de séries de streaming e seus episódios, desenvolvido seguindo o padrão MVC e utilizando estruturas de dados avançadas para garantir eficiência nas operações.
 
-Descrição do Trabalho
+Funcionalidades Principais
+Gestão de Séries
+✅ Cadastro de séries com nome, ano de lançamento, sinopse e plataforma
 
-Nosso trabalho implementa um sistema completo de gerenciamento de séries de streaming e seus episódios, seguindo rigorosamente o padrão MVC e utilizando estruturas de dados avançadas para garantir eficiência nas operações. O sistema oferece:
+✅ Consulta e atualização de informações
 
-CRUD completo para séries: Permite cadastrar, consultar, atualizar e remover séries, com campos como nome, ano de lançamento, sinopse detalhada e plataforma de streaming (Netflix, Prime Video, etc.)
+✅ Remoção segura (com verificação de episódios vinculados)
 
-CRUD completo para episódios: Cada episódio é vinculado a uma série específica, contendo informações como título, número da temporada, data de exibição e duração em minutos
+Gestão de Episódios
+✅ Cadastro de episódios vinculados a séries
 
-Relacionamento robusto 1:N: Implementamos uma Árvore B+ eficiente para mapear a relação entre séries e seus episódios, garantindo rápido acesso mesmo com grande volume de dados
+✅ Informações completas: título, temporada, data de exibição e duração
 
-Visualização organizada: Desenvolvemos uma interface que permite visualizar os episódios agrupados por temporada, facilitando a navegação
+✅ Visualização organizada por temporada
 
-Integridade referencial: O sistema impede a exclusão de séries que possuam episódios vinculados, mantendo a consistência dos dados
+Tecnologias e Estruturas
+🏗️ Arquitetura MVC (Model-View-Controller)
 
-Utilizamos o CRUD genérico fornecido para armazenamento persistente em arquivos, com dois tipos de índices:
+🌳 Árvore B+ para relacionamento série-episódio
 
-Tabela Hash Extensível para acesso direto rápido aos registros
+#️⃣ Tabela Hash Extensível para acesso rápido
 
-Árvore B+ para manter os relacionamentos e permitir buscas complexas
+💾 Armazenamento persistente em arquivos
 
-Participantes
+Equipe de Desenvolvimento
+Arthur Signorini
 
-Arthur Signorini 
-
-Bernardo Vieira 
+Bernardo Vieira
 
 Laura Persilva
 
 Otávio Augusto
 
-Classes Implementadas
-
-
-Camada Model
-Serie.java: Classe de entidade para séries com métodos de serialização
-
-Atributos: id, nome, anoLancamento, sinopse, streaming
-
-Implementa: Registro interface
-
-Métodos: toByteArray(), fromByteArray(), getters/setters
-
-Episodio.java: Classe de entidade para episódios com chave estrangeira
-
-Atributos: id, idSerie, nome, temporada, dataLancamento, duracao
-
-Implementa: Registro interface
-
-Métodos: toByteArray(), fromByteArray(), getters/setters
-
-Camada Controller
-ControleSerie.java: Gerencia operações de séries
-
-Métodos: incluir(), buscar(), alterar(), excluir()
-
-ControleEpisodio.java: Gerencia operações de episódios
-
-Métodos: incluir(), buscarPorSerie(), alterar(), excluir()
-
-RelacionamentoSerieEpisodio.java: Gerencia a Árvore B+ de relacionamentos
-
-Camada View
-VisaoSerie.java: Interface usuário para séries
-
-Métodos: leSerie(), mostraSerie(), listaSeries()
-
-VisaoEpisodio.java: Interface usuário para episódios
-
-Métodos: leEpisodio(), mostraEpisodio(), listaEpisodiosPorTemporada()
-
-Service (Infraestrutura)
-ArvoreBMais.java: Implementação da Árvore B+ genérica
-
-HashExtensivel.java: Implementação da Tabela Hash Extensível
-
-Arquivo.java: Manipulação de arquivos base para CRUD
-
-ParIDSerieEpisodio.java: Classe auxiliar para relacionamentos
-
-Interfaces
-Registro.java: Interface base para serialização
-
-RegistroArvoreBMais.java: Interface para itens da Árvore B+
-
-RegistroHashExtensivel.java: Interface para itens da Hash
-
-Observações sobre a Implementação
-Confirmamos que todas as classes listadas na estrutura de diretórios foram implementadas e integradas no sistema, incluindo:
-
-As classes fundamentais Serie.java e Episodio.java com completa implementação dos métodos de serialização
-
-Todas as classes de controle (Controle*) com a lógica completa de negócios
-
-As interfaces de visualização (Visao*) com todos os métodos de interação com usuário
-
-As estruturas de dados (ArvoreBMais, HashExtensivel) conforme especificado
-
-Classes auxiliares para relacionamento e manipulação de arquivos
-
-A estrutura segue rigorosamente o padrão MVC com separação clara de responsabilidades entre as camadas.
-
+Estrutura do Projeto
+Copy
+src/
+├── controller/
+│   ├── ControleEpisodio.java
+│   ├── ControleSerie.java
+│   └── RelacionamentoSerieEpisodio.java
+├── model/
+│   ├── Episodio.java
+│   └── Serie.java
+├── view/
+│   ├── VisaoEpisodio.java
+│   └── VisaoSerie.java
+├── service/
+│   ├── ArvoreBMais.java
+│   ├── HashExtensivel.java
+│   ├── Arquivo.java
+│   └── ParIDSerieEpisodio.java
+└── interfaces/
+    ├── Registro.java
+    ├── RegistroArvoreBMais.java
+    └── RegistroHashExtensivel.java
